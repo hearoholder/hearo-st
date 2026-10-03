@@ -1,0 +1,62 @@
+# Worst Stealer Panel — Apache Configuration
+# Deploy this alongside PHP files on GoDaddy hosting
+
+# Enable mod_rewrite
+RewriteEngine On
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Protect sensitive directories
+# Block direct access to xeff internal files
+RewriteRule ^xeff/data/.*$ - [F,L]
+RewriteRule ^xeff/stubs/.*$ - [F,L]
+RewriteRule ^xeff/builds/.*$ - [F,L]
+RewriteRule ^xeff/includes/.*$ - [F,L]
+
+# Allow access to API and public assets
+RewriteRule ^xeff/assets/(.*)$ xeff/assets/$1 [L]
+RewriteRule ^xeff/css/(.*)$ xeff/css/$1 [L]
+
+# PHP settings
+<IfModule mod_php.c>
+    php_value upload_max_filesize 128M
+    php_value post_max_size 128M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+    php_value max_input_vars 5000
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Block access to .db files
+<FilesMatch "\.db$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to .ps1 template files
+<FilesMatch "\.ps1$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 month"
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
